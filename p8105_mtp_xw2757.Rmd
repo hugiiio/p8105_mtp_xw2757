@@ -3,7 +3,7 @@ title: "p8105_mtp_xw2757"
 output: html_document
 ---
 
-```{r}
+```{r, echo = FALSE}
 library(tidyverse)
 library(readxl)
 library(viridis)
@@ -24,8 +24,15 @@ options(
 scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
+##Introduction
+
+
+
+
+
 
 ##Problem 1 - Data
+
 **Import and clean the data.** 
 Format the data to use appropriate variable names; fill in missing values with data where appropriate (as indicated in the header information); create character and ordered factors for categorical variables.
 
@@ -36,17 +43,22 @@ accel <-
   mutate(eop_size_mm = replace_na(eop_size_mm, 0),eop_shape = replace_na(eop_shape, 0), 
           sex = factor(sex), age_group = factor(age_group), eop_size = factor(eop_size), eop_shape = factor(eop_shape), eop_vis = factor(eop_visibility_classification), fhp_cat = factor(fhp_category)) %>% 
   select(-eop_visibility_classification, -fhp_category) 
-
-summary(accel, maxsum = 20)
 ```
-Replaced missing values for [eop_size_mm] and [eop_shape] to "0". After initial cleaning of data, inspection of factor levels of categorical variables shows an uncategorized value in [eop_size], and an uncategorized value in [fhp_cat]. 
+Replaced missing values for [eop_size_mm] and [eop_shape] to "0". 
+Renamed [eop_visibility_classification] to [eop_vis], and [fhp_category] to [fhp_cat].
+
 ```{r}
+summary(accel, maxsum = 20) %>% 
+  knitr::kable()
+
 accel <- accel %>% 
   mutate(eop_size = fct_recode(eop_size, "2" = "14.6"), 
          fhp_cat = fct_recode(fhp_cat, "3" = "30.8"))
 
-summary(accel, maxsum = 20)
 ```
+After initial cleaning of data, inspection of factor levels of categorical variables shows an uncategorized value in [eop_size], and an uncategorized value in [fhp_cat]. Hence we recoded the two variables to include the uncategorized values in the correct categories. 
+
+
 Now we recode the categorical variable values to characters. 
 ```{r}
 accel <- accel %>% 
@@ -55,10 +67,18 @@ accel <- accel %>%
          eop_size = fct_recode(eop_size,  "0_to_5mm" = "0",  "5_to_10mm" = "1",  "10_to_15mm" = "2",  "15_to_20mm" = "3",  "20_to_25mm" = "4", "over_25mm" = "5"), 
          eop_vis = fct_recode(eop_vis,  "0mm" = "0",  "0_to_5mm" = "1",  "over_5mm" = "2"),
          fhp_cat = fct_recode(fhp_cat,  "0_to_10mm" = "0",  "10_to_20mm" = "1",  "20_to_30mm" = "2",  "30_to_40mm" = "3", "40_to_50mm" = "4",  "50_to_60mm" = "5",  "60_to_70mm" = "6",  "70_to_80mm" = "7"))
-  
-summary(accel, maxsum = 20)
 ```
 
+
+**Data description**
+The cleaned dataframe includes the following `r ncol(accel)` variables: `r names(accel)`, describing a total of `r nrow(accel)` unique participants. 
+Age distribution is 
+
+
+
+
+**Assumption testing**
+1. missing value meaning 
 According to original data description, missing [eop_size_mm] values might indicate small or non-existing eop. To confirm this assumption, we look at [eop_shape], [eop_size] categories, and [eop_vis] for when [eop_size_mm] is 0 (missing) in the following table.
 ```{r}
 accel %>% 
@@ -69,9 +89,17 @@ accel %>%
 ```
 As the table shows, the observations fits the assumption, with 0 to small size categories and visibility.
 
+2. category definitions
+To assess if the categorical variables correctly implement the definitions based on underlying continuous variables, we test the range of the numeric variables under each category.
+```{r}
+accel %>% 
+  group_by(eop_size, eop_vis) %>% 
+  summarize(min = min(eop_size_mm), max = max(eop_size_mm)) %>% 
+  knitr::kable()
+```
+As shown in the table above, there are some discrepancies for both [eop_size] and [eop_vis] categories.  
 
 
-Briefly describe the data cleaning process and the resulting dataset, identifying key variables based on your understanding of the original scientific report. How many participants are included? What is the age and gender distribution (a human-readable table may help here)?
 
-Note (but don’t correct) issues in the available data – in particular, whether categorical variables in the dataset correctly implement the definitions based on underlying continuous variables. Use tables, figures, or specific examples (i.e. data for particular subjects) as needed to illustrate these issues.
+
 
